@@ -295,7 +295,11 @@ public class CapacitorUpdater {
             sessionKey,
             checksum,
             this.publicKey,
-            manifest != null
+            manifest != null,
+            this.appId,
+            this.versionBuild,
+            this.versionOs,
+            this.PLUGIN_VERSION
         );
 
         if (manifest != null) {
@@ -637,11 +641,24 @@ public class CapacitorUpdater {
         return json;
     }
 
+    private String getUserAgent() {
+        return String.format("%s (%s; build:%s; Android %s) CapacitorUpdater/%s", 
+            this.appId,
+            this.versionCode,
+            this.versionBuild,
+            this.versionOs,
+            this.PLUGIN_VERSION);
+    }
+
     private void makeJsonRequest(String url, JSONObject jsonBody, Callback callback) {
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
         RequestBody body = RequestBody.create(jsonBody.toString(), JSON);
 
-        Request request = new Request.Builder().url(url).post(body).build();
+        Request request = new Request.Builder()
+            .url(url)
+            .header("User-Agent", getUserAgent())
+            .post(body)
+            .build();
 
         client
             .newCall(request)
@@ -739,6 +756,7 @@ public class CapacitorUpdater {
 
         Request request = new Request.Builder()
             .url(channelUrl)
+            .header("User-Agent", getUserAgent())
             .delete(RequestBody.create(json.toString(), MediaType.get("application/json")))
             .build();
 
@@ -840,6 +858,7 @@ public class CapacitorUpdater {
 
         Request request = new Request.Builder()
             .url(channelUrl)
+            .header("User-Agent", getUserAgent())
             .put(RequestBody.create(json.toString(), MediaType.get("application/json")))
             .build();
 
@@ -930,6 +949,7 @@ public class CapacitorUpdater {
 
         Request request = new Request.Builder()
             .url(statsUrl)
+            .header("User-Agent", getUserAgent())
             .post(RequestBody.create(json.toString(), MediaType.get("application/json")))
             .build();
 

@@ -238,6 +238,15 @@ import UIKit
         )
     }
 
+    private func getUserAgent() -> String {
+        return String(format: "%@ (%@; build:%@; iOS %@) CapacitorUpdater/%@", 
+            self.appId,
+            self.versionCode,
+            self.versionBuild,
+            self.versionOs,
+            self.PLUGIN_VERSION)
+    }
+
     public func getLatest(url: URL, channel: String?) -> AppVersion {
         let semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
         let latest: AppVersion = AppVersion()
@@ -246,7 +255,10 @@ import UIKit
             parameters.defaultChannel = channel
         }
         print("\(CapacitorUpdater.TAG) Auto-update parameters: \(parameters)")
-        let request = AF.request(url, method: .post, parameters: parameters, encoder: JSONParameterEncoder.default, requestModifier: { $0.timeoutInterval = self.timeout })
+        let headers: HTTPHeaders = [
+            "User-Agent": getUserAgent()
+        ]
+        let request = AF.request(url, method: .post, parameters: parameters, encoder: JSONParameterEncoder.default, headers: headers, requestModifier: { $0.timeoutInterval = self.timeout })
 
         request.validate().responseDecodable(of: AppVersionDec.self) { response in
             switch response.result {
@@ -945,8 +957,10 @@ import UIKit
         }
         let semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
         let parameters: InfoObject = self.createInfoObject()
-
-        let request = AF.request(self.channelUrl, method: .delete, parameters: parameters, encoder: JSONParameterEncoder.default, requestModifier: { $0.timeoutInterval = self.timeout })
+        let headers: HTTPHeaders = [
+            "User-Agent": getUserAgent()
+        ]
+        let request = AF.request(self.channelUrl, method: .delete, parameters: parameters, encoder: JSONParameterEncoder.default, headers: headers, requestModifier: { $0.timeoutInterval = self.timeout })
 
         request.validate().responseDecodable(of: SetChannelDec.self) { response in
             switch response.result {
@@ -982,8 +996,10 @@ import UIKit
         let semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
         var parameters: InfoObject = self.createInfoObject()
         parameters.channel = channel
-
-        let request = AF.request(self.channelUrl, method: .post, parameters: parameters, encoder: JSONParameterEncoder.default, requestModifier: { $0.timeoutInterval = self.timeout })
+        let headers: HTTPHeaders = [
+            "User-Agent": getUserAgent()
+        ]
+        let request = AF.request(self.channelUrl, method: .post, parameters: parameters, encoder: JSONParameterEncoder.default, headers: headers, requestModifier: { $0.timeoutInterval = self.timeout })
 
         request.validate().responseDecodable(of: SetChannelDec.self) { response in
             switch response.result {
@@ -1018,7 +1034,10 @@ import UIKit
         }
         let semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
         let parameters: InfoObject = self.createInfoObject()
-        let request = AF.request(self.channelUrl, method: .put, parameters: parameters, encoder: JSONParameterEncoder.default, requestModifier: { $0.timeoutInterval = self.timeout })
+        let headers: HTTPHeaders = [
+            "User-Agent": getUserAgent()
+        ]
+        let request = AF.request(self.channelUrl, method: .put, parameters: parameters, encoder: JSONParameterEncoder.default, headers: headers, requestModifier: { $0.timeoutInterval = self.timeout })
 
         request.validate().responseDecodable(of: GetChannelDec.self) { response in
             defer {
@@ -1073,7 +1092,9 @@ import UIKit
         parameters.action = action
         parameters.version_name = versionName
         parameters.old_version_name = oldVersionName ?? ""
-
+        let headers: HTTPHeaders = [
+            "User-Agent": getUserAgent()
+        ]
         let operation = BlockOperation {
             let semaphore = DispatchSemaphore(value: 0)
             AF.request(
@@ -1081,6 +1102,7 @@ import UIKit
                 method: .post,
                 parameters: parameters,
                 encoder: JSONParameterEncoder.default,
+                headers: headers,
                 requestModifier: { $0.timeoutInterval = self.timeout }
             ).responseData { response in
                 switch response.result {

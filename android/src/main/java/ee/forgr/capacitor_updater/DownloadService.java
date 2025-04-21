@@ -6,6 +6,7 @@
 package ee.forgr.capacitor_updater;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.work.Data;
@@ -51,9 +52,19 @@ public class DownloadService extends Worker {
     public static final String CHECKSUM = "checksum";
     public static final String PUBLIC_KEY = "publickey";
     public static final String IS_MANIFEST = "is_manifest";
+    public static final String APP_ID = "appId";
+    public static final String VERSION_BUILD = "versionBuild";
+    public static final String VERSION_OS = "versionOs";
+    public static final String PLUGIN_VERSION = "pluginVersion";
     private static final String UPDATE_FILE = "update.dat";
 
     private final OkHttpClient client = new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)).build();
+
+    private String versionCode = "";
+    private String appIdValue = "";
+    private String versionBuildValue = "";
+    private String versionOsValue = "";
+    private String pluginVersionValue = "";
 
     public DownloadService(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -89,6 +100,11 @@ public class DownloadService extends Worker {
             String documentsDir = getInputData().getString(DOCDIR);
             String dest = getInputData().getString(FILEDEST);
             String version = getInputData().getString(VERSION);
+            this.versionCode = getInputData().getString(VERSION);
+            this.appIdValue = getInputData().getString(APP_ID);
+            this.versionBuildValue = getInputData().getString(VERSION_BUILD);
+            this.versionOsValue = getInputData().getString(VERSION_OS);
+            this.pluginVersionValue = getInputData().getString(PLUGIN_VERSION);
             String sessionKey = getInputData().getString(SESSIONKEY);
             String checksum = getInputData().getString(CHECKSUM);
             String publicKey = getInputData().getString(PUBLIC_KEY);
@@ -365,6 +381,15 @@ public class DownloadService extends Worker {
         }
     }
 
+    private String getUserAgent() {
+        return String.format("%s (%s; build:%s; Android %s) CapacitorUpdater/%s", 
+            this.appIdValue,
+            this.versionCode,
+            this.versionBuildValue,
+            this.versionOsValue,
+            this.pluginVersionValue);
+    }
+
     private void downloadAndVerify(
         String downloadUrl,
         File targetFile,
@@ -375,7 +400,10 @@ public class DownloadService extends Worker {
     ) throws Exception {
         Log.d(TAG, "downloadAndVerify " + downloadUrl);
 
-        Request request = new Request.Builder().url(downloadUrl).build();
+        Request request = new Request.Builder()
+            .url(downloadUrl)
+            .header("User-Agent", getUserAgent())
+            .build();
 
         // Check if file is a Brotli file
         boolean isBrotli = targetFile.getName().endsWith(".br");
